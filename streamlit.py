@@ -28,7 +28,12 @@ def main():
     # Display the Store data
     st.header("Store Data")
     st.dataframe(store_df)
+    sales_query = "SELECT * FROM Sales_Fact"
+    sales_df = pd.read_sql_query(sales_query, engine)
 
+    # Display the Sales_Fact data
+    st.header("Sales_Fact Data")
+    st.dataframe(sales_df)
     # SQL query for the "Product" table
     product_query = "SELECT * FROM Product"
     product_df = pd.read_sql_query(product_query, engine)
