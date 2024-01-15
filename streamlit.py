@@ -30,10 +30,10 @@ def main():
     # Display the Store data
     st.header("Store Data")
     st.dataframe(store_df)
-    sales_query = "SELECT * FROM Sales_Fact"
+    sales_query = "SELECT * FROM Sales_Fact LIMIT 1000"
     sales_df = load_data(sales_query)
     
-    st.header("Sales_Fact Data")
+    st.header("Sales_Fact Data First 1000 Rows")
     st.dataframe(sales_df)
     # SQL query for the "Product" table
     product_query = "SELECT * FROM Product"
