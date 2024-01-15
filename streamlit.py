@@ -11,7 +11,9 @@ db_path = "./analysis.db"
 
 # Database connection
 engine = create_engine(f"sqlite:///{db_path}")
-
+def load_data(query):
+    with engine.connect() as conn:
+        return pd.read_sql_query(query, conn)
 # Streamlit app
 def main():
     st.title("Data Exploration App")
@@ -29,9 +31,8 @@ def main():
     st.header("Store Data")
     st.dataframe(store_df)
     sales_query = "SELECT * FROM Sales_Fact"
-    with engine.connect() as conn:
-        sales_df = conn.execute(sales_query)
-    # Display the Sales_Fact data
+    sales_df = load_data(sales_query)
+    
     st.header("Sales_Fact Data")
     st.dataframe(sales_df)
     # SQL query for the "Product" table
