@@ -81,9 +81,10 @@ def main():
 
 
     # Load data from AnotherTempTable
-    st.header("Another Temp Table Data")
+    st.header("Another Temp Table Data First 1000 Rows")
     sales2_df = load_data("SELECT * FROM AnotherTempTable")
-    st.dataframe(sales2_df)
+    sales2_df_to_show = load_data("SELECT * FROM AnotherTempTable LIMIT 1000")
+    st.dataframe(sales2_df_to_show)
 
     # Plotting
     if st.checkbox("Show Sales by Product Category and Store City"):
