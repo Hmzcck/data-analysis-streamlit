@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, text
 import matplotlib.ticker as ticker
 
 # SQLite database file path
-db_path = "C:/Users/Zwew/Desktop/datass/analysis.db"
+db_path = "./analysis.db"
 
 # Database connection
 engine = create_engine(f"sqlite:///{db_path}")
