@@ -29,8 +29,8 @@ def main():
     st.header("Store Data")
     st.dataframe(store_df)
     sales_query = "SELECT * FROM Sales_Fact"
-    sales_df = pd.read_sql_query(sales_query, engine)
-
+    with engine.connect() as conn:
+        sales_df = conn.execute(sales_query)
     # Display the Sales_Fact data
     st.header("Sales_Fact Data")
     st.dataframe(sales_df)
