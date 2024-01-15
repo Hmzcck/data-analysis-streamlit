@@ -16,14 +16,11 @@ engine = create_engine(f"sqlite:///{db_path}")
 def main():
     st.title("Data Exploration App")
 
-    # SQL query for the "Sales_Fact" table
-    sales_query = "SELECT * FROM Sales_Fact"
-    sales_df = pd.read_sql_query(sales_query, engine)
-
-    # Display the Sales_Fact data
-    st.header("Sales_Fact Data")
-    st.dataframe(sales_df)
-
+    # Function to load data
+    def load_data(query):
+        with engine.connect() as conn:
+            return pd.read_sql_query(query, conn)
+    
     # SQL query for the "Store" table
     store_query = "SELECT * FROM Store"
     store_df = pd.read_sql_query(store_query, engine)
@@ -47,93 +44,45 @@ def main():
     # Display the Date_Dimension data
     st.header("Date_Dimension Data")
     st.dataframe(date_df)
-
-    # SQL query for creating another temporary table
-    create_temp_table_query = text("""
-    CREATE TEMPORARY TABLE AnotherTempTable AS
+    # Display tables using a function to avoid redundancy
+    for table_name in ["Sales_Fact", "Store", "Product", "Date_Dimension"]:
+        st.header(f"{table_name} Data")
+        df = load_data(f"SELECT * FROM {table_name}")
+        st.dataframe(df)
+    
+    # Create another temporary table
+    create_temp_table_query = """
+    CREATE TEMPORARY TABLE IF NOT EXISTS AnotherTempTable AS
     SELECT
-        s.Sale_ID,
-        s.Date,
-        s.Store_ID,
-        s.Product_ID,
-        s.Units_Sold,
-        s.Total_Cost,
-        s.Total_Sale,
+        s.Sale_ID, s.Date, s.Store_ID, s.Product_ID, s.Units_Sold,
+        s.Total_Cost, s.Total_Sale, 
         CAST(s.Product_Cost AS FLOAT) AS Product_Cost,
         CAST(s.Product_Price AS FLOAT) AS Product_Price,
-        p.Product_Name,
-        p.Product_Category,
-        st.Store_Name,
-        st.Store_City,
-        st.Store_Location
-    FROM 
-        Sales_Fact s
-        JOIN Product p ON s.Product_ID = p.Product_ID
-        JOIN Store st ON s.Store_ID = st.Store_ID
-    """)
-
-    # Execute the query to create another temporary table
-    with engine.connect() as connection:
-        connection.execute(create_temp_table_query)
-
-    # SQL query to load data from the new temporary table into a pandas DataFrame
-    another_temp_table_df = pd.read_sql_query("SELECT * FROM AnotherTempTable", engine)
-
-    # Display the data from the new temporary table
-    st.header("Another Temp Table Data")
-    st.dataframe(another_temp_table_df)
-
-    # SQL query to load data from TempSales2 into a pandas DataFrame
-    query2 = "SELECT * FROM AnotherTempTable"
-    sales2_df = pd.read_sql_query(query2, engine)
-
-
-    # SQL query for the plot
-    query_plot = """
-    SELECT 
-        Store_City, 
-        Product_Category, 
-        SUM(Total_Sale) AS Total_Sale
-    FROM 
-        AnotherTempTable
-    GROUP BY 
-        Store_City, 
-        Product_Category;
+        p.Product_Name, p.Product_Category,
+        st.Store_Name, st.Store_City, st.Store_Location
+    FROM Sales_Fact s
+    JOIN Product p ON s.Product_ID = p.Product_ID
+    JOIN Store st ON s.Store_ID = st.Store_ID
     """
+    with engine.connect() as conn:
+        conn.execute(create_temp_table_query)
 
-    # Execute the SQL query and store the result in a DataFrame
-    data_for_plot = pd.read_sql_query(query_plot, engine)
+    # Load data from AnotherTempTable
+    st.header("Another Temp Table Data")
+    sales2_df = load_data("SELECT * FROM AnotherTempTable")
+    st.dataframe(sales2_df)
 
     # Plotting
-    plt.figure(figsize=(20, 10))
-    barplot = sns.barplot(
-        data=data_for_plot,
-        x='Product_Category',
-        y='Total_Sale',
-        hue='Store_City',
-        palette='deep'
-    )
+    if st.checkbox("Show Sales by Product Category and Store City"):
+        plot_data = load_data("""
+        SELECT Store_City, Product_Category, SUM(Total_Sale) AS Total_Sale
+        FROM AnotherTempTable
+        GROUP BY Store_City, Product_Category;
+        """)
 
-    plt.legend(title='Store Cities', loc='upper left', bbox_to_anchor=(1, 1))
-    plt.xticks(rotation=45, ha='right')
+        # Use Streamlit's native chart functionality for plotting
+        st.bar_chart(plot_data.pivot_table(index='Product_Category', columns='Store_City', values='Total_Sale'))
 
-    # Annotating the bars
-    for p in barplot.patches:
-        height = p.get_height()
-        if not pd.isna(height): 
-            barplot.annotate(f'{height:,.0f}',
-                             (p.get_x() + p.get_width() / 2, height),
-                             ha='center', va='bottom',
-                             xytext=(0, 4),
-                             textcoords='offset points')
-
-    plt.xlabel('Product Category')
-    plt.ylabel('Sales')
-    plt.title('Sales by Product Category and Store City')
-
-    # Display the plot in Streamlit
-    st.header("Sales by Product Category and Store City")
-    st.pyplot(plt)
 
     # Calculate and display average daily sales per store
     sales4 = sales2_df.copy()
