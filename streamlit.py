@@ -45,11 +45,6 @@ def main():
     st.header("Date_Dimension Data")
     st.dataframe(date_df)
     # Display tables using a function to avoid redundancy
-    for table_name in ["Sales_Fact", "Store", "Product", "Date_Dimension"]:
-        st.header(f"{table_name} Data")
-        df = load_data(f"SELECT * FROM {table_name}")
-        st.dataframe(df)
-    
     # Create another temporary table
     create_temp_table_query = """
     CREATE TEMPORARY TABLE IF NOT EXISTS AnotherTempTable AS
