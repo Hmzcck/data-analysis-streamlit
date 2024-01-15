@@ -46,21 +46,33 @@ def main():
     st.dataframe(date_df)
     # Display tables using a function to avoid redundancy
     # Create another temporary table
-    create_temp_table_query = """
-    CREATE TEMPORARY TABLE IF NOT EXISTS AnotherTempTable AS
+    create_temp_table_query = text("""
+    CREATE TEMPORARY TABLE AnotherTempTable AS
     SELECT
-        s.Sale_ID, s.Date, s.Store_ID, s.Product_ID, s.Units_Sold,
-        s.Total_Cost, s.Total_Sale, 
+        s.Sale_ID,
+        s.Date,
+        s.Store_ID,
+        s.Product_ID,
+        s.Units_Sold,
+        s.Total_Cost,
+        s.Total_Sale,
         CAST(s.Product_Cost AS FLOAT) AS Product_Cost,
         CAST(s.Product_Price AS FLOAT) AS Product_Price,
-        p.Product_Name, p.Product_Category,
-        st.Store_Name, st.Store_City, st.Store_Location
-    FROM Sales_Fact s
-    JOIN Product p ON s.Product_ID = p.Product_ID
-    JOIN Store st ON s.Store_ID = st.Store_ID
-    """
-    with engine.connect() as conn:
-        conn.execute(create_temp_table_query)
+        p.Product_Name,
+        p.Product_Category,
+        st.Store_Name,
+        st.Store_City,
+        st.Store_Location
+    FROM 
+        Sales_Fact s
+        JOIN Product p ON s.Product_ID = p.Product_ID
+        JOIN Store st ON s.Store_ID = st.Store_ID
+    """)
+
+    # Execute the query to create another temporary table
+    with engine.connect() as connection:
+        connection.execute(create_temp_table_query)
+
 
     # Load data from AnotherTempTable
     st.header("Another Temp Table Data")
